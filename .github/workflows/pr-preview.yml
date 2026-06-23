@@ -1,22 +1,31 @@
 name: Deploy PR previews
 
 on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - closed
+    pull_request:
+        types:
+            - opened
+            - reopened
+            - synchronize
+            - closed
 
 concurrency: preview-${{ github.ref }}
 
 jobs:
-  deploy-preview:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v 4.2.2
-      - name: Generate contributors list
-        run: bash scripts/generate-cards.sh
-      - name: Deploy preview
-        uses: rossjrw/pr-preview-action@df22037db54ab6ee34d3c1e2b8810ac040a530c6 # v 1.6.0
+    deploy-preview:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Install and Build
+              if: github.event.action != 'closed' # We don't need the build if we know the preview will be removed
+              run: |
+                  npm install
+                  npm run build
+
+            - name: Deploy preview
+              uses: rossjrw/pr-preview-action@v1
+              with:
+                  source-dir: .
+                  preview-branch: main
+                  qr-code: true
